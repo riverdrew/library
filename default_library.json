@@ -1,0 +1,38 @@
+[
+    {
+        "title": "Neuronale Netze prorammieren mit Python",
+        "author": "Roland Schweiger",
+        "year": "2025",
+        "status": "lent out"
+    },
+    {
+        "title": "Python",
+        "author": "Michael Kofler",
+        "year": "2024",
+        "status": "available"
+    },
+    {
+        "title": "Python programmieren lernen",
+        "author": "John Paul Mueller",
+        "year": "2018",
+        "status": "available"
+    },
+    {
+        "title": "Java ist auch eine Insel",
+        "author": "Christian Ullenboom",
+        "year": "2023",
+        "status": "available"
+    },
+    {
+        "title": "Java Kompendium",
+        "author": "Markus Neumann",
+        "year": "2019",
+        "status": "available"
+    },
+    {
+        "title": "basil",
+        "author": "river",
+        "year": "2023",
+        "status": "lent out"
+    }
+]
