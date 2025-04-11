@@ -55,10 +55,10 @@ class LibraryManager:
                 (author.lower() in book["author"].lower() if author else True) and
                 (year in str(book["year"]) if year else True)]
 
-    def update_treeview(self, tree):
+    def update_treeview(self, tree, books):
         for row in tree.get_children():
             tree.delete(row)
-        for book in self.library:
+        for book in books:
             tree.insert('', 'end', values=(book["title"], book["author"], book["year"], book["status"]))
 
 class LibraryApp:
@@ -71,7 +71,7 @@ class LibraryApp:
         self.root.config(menu=self.menu)
         self.create_menu()
         self.create_widgets()
-        self.library_manager.update_treeview(self.tree)
+        self.library_manager.update_treeview(self.tree, self.library_manager.library)
         tools = pyocr.get_available_tools()
         if len(tools) == 0:
              print("No OCR tool found")
@@ -181,28 +181,32 @@ class LibraryApp:
     def recognize_text_in_rectangle(self, x1, y1, x2, y2):
         cropped_image = self.image.crop((x1, y1, x2, y2))
         recognized_text = self.tool.image_to_string(cropped_image, lang='eng', builder=pyocr.builders.TextBuilder())
-        self.text_label.config(text=f"Recognized Text: {recognized_text.strip()}")
+        self.recognized_text = recognized_text.strip()
+        self.text_label.config(text=f"Recognized Text: {recognized_text}")
         self.check = True 
-        return recognized_text.strip()
-        
+        self.search_text()
+        return recognized_text
     
     def search_text(self):
-        if self.check == True: 
-            text = self.get.recognized_text.strip()
-            filtered_books = self.library_manager.search_books(text)
-            if filtered_books:
-                self.library_manager.update_treeview(self.tree)
-            else:
-                answer= messagebox.askokcancel("","Book not found. Do you want to add it to your library?")
-                if answer:
-                    self.library_manager.add_book()
-
+        if self.check: 
+                text = self.recognized_text.strip()
+                author = None
+                year = None
+                filtered_books = self.library_manager.search_books(text, author, year)
+                if filtered_books:
+                    self.library_manager.update_treeview(self.tree, filtered_books)
+                    self.T1.delete(1.0, END)
+                    self.T1.insert(END, f"Amount of books: {len(self.library_manager.library)}")
+                else:
+                    answer= messagebox.askokcancel("","Book not found. Do you want to add it to your library?")
+                    if answer:
+                        self.add_book()
 
     def open_library(self):
         file_path = filedialog.askopenfilename(filetypes=[("JSON Files", "*.json"), ("All Files", "*.*")])
         if file_path:
             if self.library_manager.open_library(file_path):
-                self.library_manager.update_treeview(self.tree)
+                self.library_manager.update_treeview(self.tree, self.library_manager.library)
                 self.T1.delete(1.0, END)
                 self.T1.insert(END, f"Amount of books: {len(self.library_manager.library)}")
             else:
@@ -221,7 +225,7 @@ class LibraryApp:
                                                      filetypes=[("JSON Files", "*.json"), ("All Files", "*.*")])
         if new_file_path:
             self.library_manager.create_library(new_file_path)
-            self.library_manager.update_treeview(self.tree)
+            self.library_manager.update_treeview(self.tree, self.library_manager.library)
             self.T1.delete(1.0, END)
             self.T1.insert(END, f"Amount of books: {len(self.library_manager.library)}")
             messagebox.showinfo("Notice", "New library was created.")
@@ -256,14 +260,13 @@ class LibraryApp:
         btn2 = Button(new_window, text="Cancel", command=cancel_thread)
         btn2.grid()
         
-
     def start_search(self):
         title_to_find = self.e1.get().strip()
         author_to_find = self.e2.get().strip()
         year_to_find = self.e3.get().strip()
         filtered_books = self.library_manager.search_books(title_to_find, author_to_find, year_to_find)
         if filtered_books:
-            self.library_manager.update_treeview(self.tree)
+            self.library_manager.update_treeview(self.tree, filtered_books)
         else:
             messagebox.showinfo("Error", "Book was not found. Please check for spelling.")
     
@@ -292,7 +295,7 @@ class LibraryApp:
             year = f3.get().strip()
             if title and author and year:
                 self.library_manager.add_book(title, author, year)
-                self.library_manager.update_treeview(self.tree)
+                self.library_manager.update_treeview(self.tree, self.library_manager.library)
                 new_window.destroy()
 
         save_btn = Button(new_window, text="Save", command=add_new_book)
@@ -313,7 +316,7 @@ class LibraryApp:
             title = f1.get().strip()
             author = f2.get().strip()
             self.library_manager.change_book_status(title, author, "deleted")
-            self.library_manager.update_treeview(self.tree)
+            self.library_manager.update_treeview(self.tree, self.library_manager.library)
             new_window.destroy()
 
         delete_button = Button(new_window, text="Delete", command=actual_change)
@@ -334,7 +337,7 @@ class LibraryApp:
             def choose_status():
                 selected_status = combo_box.get()
                 self.library_manager.change_book_status(item_data["values"][0], item_data["values"][1], selected_status)
-                self.library_manager.update_treeview(self.tree)
+                self.library_manager.update_treeview(self.tree, self.library_manager.library)
                 new_window2.destroy()
 
             save_btn = Button(new_window2, text="Save", command=choose_status)
@@ -346,4 +349,3 @@ if __name__ == "__main__":
     app = LibraryApp(root, library_manager)
 
     root.mainloop()
-
